@@ -10,3 +10,5 @@ To run the code, make sure you have your Rust development environment set up, cl
 
 `SDL2.dll` can be obtained from the SDL development libraries at [libSDL.org](https://www.libsdl.org/download-2.0.php).
 Further instructions on how to install SDL2 can be found at [crates.io](https://crates.io/crates/sdl2).
+
+![Screenshot](screenshot.webp)
