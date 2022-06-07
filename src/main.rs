@@ -1,12 +1,13 @@
+use rand::{prelude::ThreadRng, Rng};
 use sdl2::{event::Event, keyboard::Keycode, pixels::PixelFormatEnum};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 mod drawing;
 use crate::drawing::Buffer;
 
-const WIN_H: u32 = 480;
-const WIN_W: u32 = 640;
-const FPS: u32 = 30;
+const WIN_H: u32 = 300;
+const WIN_W: u32 = 400;
+const FPS: u32 = 60;
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -29,10 +30,12 @@ fn main() -> Result<(), String> {
         .expect("Couldn't create texture");
 
     let mut event_pump = sdl_context.event_pump()?;
-
+    let mut rng = rand::thread_rng();
     let mut buffer = Buffer::new(WIN_W as usize, WIN_H as usize);
+    let frame_time = Duration::new(0, 1_000_000_000 / FPS);
 
     'running: loop {
+        let start_time = Instant::now();
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -45,19 +48,25 @@ fn main() -> Result<(), String> {
         }
         canvas.clear();
 
-        randomize(&mut buffer);
+        // render logic here
+        randomize(&mut buffer, &mut rng);
+
         buffer.render(&mut texture, &mut canvas)?;
 
+        // calculate time before displaying frame (to ensure even frame cadence)
+        let elasped_time = start_time.elapsed();
+        let duration = frame_time - Duration::from_nanos((elasped_time.as_nanos() % frame_time.as_nanos()) as u64);
+        ::std::thread::sleep(duration);
+
         canvas.present();
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000 / FPS));
     }
     Ok(())
 }
 
-fn randomize(buffer: &mut Buffer) {
+fn randomize(buffer: &mut Buffer, rng: &mut ThreadRng) {
     for y in 0..WIN_H as usize {
         for x in 0..WIN_W as usize {
-            let v = rand::random();
+            let v = rng.gen();
             buffer.set_pixel(x, y, &[v, v, v])
         }
     }
