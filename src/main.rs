@@ -1,6 +1,7 @@
-use rand::{prelude::ThreadRng, Rng};
 use sdl2::{event::Event, keyboard::Keycode, pixels::PixelFormatEnum};
 use std::time::{Duration, Instant};
+use std::thread;
+use rayon::prelude::*;
 
 mod drawing;
 use crate::drawing::Buffer;
@@ -30,7 +31,6 @@ fn main() -> Result<(), String> {
         .expect("Couldn't create texture");
 
     let mut event_pump = sdl_context.event_pump()?;
-    let mut rng = rand::thread_rng();
     let mut buffer = Buffer::new(WIN_W as usize, WIN_H as usize);
     let frame_time = Duration::new(0, 1_000_000_000 / FPS);
 
@@ -49,25 +49,30 @@ fn main() -> Result<(), String> {
         canvas.clear();
 
         // render logic here
-        randomize(&mut buffer, &mut rng);
+        randomize(&mut buffer);
 
         buffer.render(&mut texture, &mut canvas)?;
 
         // calculate time before displaying frame (to ensure even frame cadence)
         let elasped_time = start_time.elapsed();
         let duration = frame_time - Duration::from_nanos((elasped_time.as_nanos() % frame_time.as_nanos()) as u64);
-        ::std::thread::sleep(duration);
+        thread::sleep(duration);
 
         canvas.present();
     }
     Ok(())
 }
 
-fn randomize(buffer: &mut Buffer, rng: &mut ThreadRng) {
-    for y in 0..WIN_H as usize {
+fn randomize(buffer: &mut Buffer) {
+    // for y in 0..WIN_H as usize {
+    //     for x in 0..WIN_W as usize {
+    //         let v = rng.gen();
+    //         buffer.set_pixel(x, y, &[v, v, v])
+    //     }
+    // }
+    buffer.rows.par_iter_mut().for_each(|p| 
         for x in 0..WIN_W as usize {
-            let v = rng.gen();
-            buffer.set_pixel(x, y, &[v, v, v])
-        }
-    }
+        let v = rand::random();
+        p.set_pixel(x, &[v,v,v]);
+    });
 }
